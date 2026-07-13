@@ -5,6 +5,7 @@ import { UsageWatcher } from "./watcher";
 import { StatusBar } from "./ui/statusBar";
 import { DashboardProvider } from "./ui/dashboardView";
 import { UsageTreeProvider } from "./ui/treeView";
+import { Notifier } from "./ui/notifier";
 
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel("Claude Usage");
@@ -13,12 +14,17 @@ export function activate(context: vscode.ExtensionContext): void {
   let config: ExtensionConfig = readConfig();
 
   const store = new UsageStore(
-    () => ({ projectsDir: config.projectsDir, costOptions: config.costOptions }),
+    () => ({
+      projectsDir: config.projectsDir,
+      costOptions: config.costOptions,
+      windowHours: config.resetWindowHours,
+    }),
     output
   );
   const statusBar = new StatusBar();
   const dashboard = new DashboardProvider(context.extensionUri);
   const tree = new UsageTreeProvider();
+  const notifier = new Notifier(context.globalState);
   const watcher = new UsageWatcher(() => void store.scan(), output);
 
   context.subscriptions.push(store, statusBar, watcher);
@@ -28,6 +34,7 @@ export function activate(context: vscode.ExtensionContext): void {
     statusBar.update(result, config);
     dashboard.update(result, config);
     tree.setData(result, config);
+    notifier.check(result, config);
   };
 
   context.subscriptions.push(store.onDidChange(renderAll));
@@ -62,6 +69,10 @@ export function activate(context: vscode.ExtensionContext): void {
       ) {
         store.reset();
         watcher.start(config.projectsDir, config.refreshInterval);
+        void store.scan();
+      } else if (prev.resetWindowHours !== config.resetWindowHours) {
+        // Window length only affects block grouping → cheap re-aggregate
+        // (unchanged files early-return in the scan).
         void store.scan();
       } else if (prev.refreshInterval !== config.refreshInterval) {
         watcher.start(config.projectsDir, config.refreshInterval);

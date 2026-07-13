@@ -66,6 +66,18 @@ export interface ProjectNode {
   sessions: UsageRollup[];
 }
 
+/**
+ * A rolling usage window (Anthropic's ~5-hour subscription reset window),
+ * reconstructed from message timestamps. `resetTime` = `startTime` + window.
+ */
+export interface UsageBlock extends TokenTotals {
+  startTime: string; // ISO8601, floored to the hour
+  resetTime: string; // ISO8601, startTime + windowHours
+  lastEntryTime: string; // ISO8601 of the last message in the block
+  costUSD: number;
+  messageCount: number;
+}
+
 export interface AggregationResult {
   byDay: UsageRollup[];
   byMonth: UsageRollup[];
@@ -73,6 +85,7 @@ export interface AggregationResult {
   byProject: UsageRollup[];
   byModel: UsageRollup[];
   projectTree: ProjectNode[];
+  blocks: UsageBlock[];
   grandTotal: GrandTotal;
 }
 

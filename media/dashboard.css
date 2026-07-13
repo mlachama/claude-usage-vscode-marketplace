@@ -68,6 +68,55 @@ h3 {
   margin-top: 2px;
 }
 
+.reset-card {
+  background: var(--vscode-editorWidget-background);
+  border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 10px;
+}
+.reset-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.reset-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--vscode-descriptionForeground);
+}
+.reset-sub {
+  font-size: 11px;
+}
+.reset-big {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 6px 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+.reset-track {
+  background: rgba(127, 127, 127, 0.25);
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;
+}
+.reset-fill {
+  height: 100%;
+  width: 0;
+  background: var(--vscode-charts-blue, #4e94ce);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.reset-fill.low {
+  background: var(--vscode-charts-red, #e51400);
+}
+.reset-meta {
+  font-size: 11px;
+  margin-top: 6px;
+}
+
 .bars {
   display: flex;
   flex-direction: column;

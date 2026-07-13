@@ -1,19 +1,8 @@
 import * as vscode from "vscode";
 import { ExtensionConfig } from "../config";
-import { formatCost, formatTokens } from "../format";
+import { formatCost, formatTokens, monthKey, todayKey } from "../format";
+import { activeWindowStatus } from "../data/blocks";
 import { AggregationResult, GrandTotal, UsageRollup } from "../data/types";
-
-function todayKey(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
-}
-
-function monthKey(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
 
 interface Card {
   cost: string;
@@ -27,10 +16,23 @@ interface BarRow {
   pct: number;
 }
 
+interface ResetWindowData {
+  active: boolean;
+  /** ISO reset time, for a live client-side countdown (null when idle). */
+  resetTime: string | null;
+  /** Rounded % of quota left, or null when the cap isn't known. */
+  percentLeft: number | null;
+  used: string; // formatted tokens
+  limit: string; // formatted tokens ("" when unknown)
+  limitIsAuto: boolean;
+  windowHours: number;
+}
+
 interface DashboardData {
   showCost: boolean;
   updatedAt: string;
   cards: { today: Card; month: Card; allTime: Card };
+  resetWindow: ResetWindowData | null;
   daily: BarRow[];
   models: BarRow[];
   projects: BarRow[];
@@ -124,9 +126,42 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         month: card(month, config),
         allTime: card(result?.grandTotal ?? empty, config),
       },
+      resetWindow: this.resetWindow(result, config),
       daily: bars(daily, config, config.showCost),
       models: bars((result?.byModel ?? []).slice(0, 8), config, config.showCost),
       projects: bars((result?.byProject ?? []).slice(0, 8), config, config.showCost),
+    };
+  }
+
+  private resetWindow(
+    result: AggregationResult | undefined,
+    config: ExtensionConfig
+  ): ResetWindowData | null {
+    if (!result) {
+      return null;
+    }
+    const win = activeWindowStatus(result.blocks, {
+      tokenLimit: config.resetTokenLimit,
+    });
+    if (!win) {
+      return {
+        active: false,
+        resetTime: null,
+        percentLeft: null,
+        used: "",
+        limit: "",
+        limitIsAuto: config.resetTokenLimit <= 0,
+        windowHours: config.resetWindowHours,
+      };
+    }
+    return {
+      active: true,
+      resetTime: win.resetTime,
+      percentLeft: win.percentLeft === undefined ? null : Math.round(win.percentLeft),
+      used: formatTokens(win.tokensUsed),
+      limit: win.estimatedLimit > 0 ? formatTokens(win.estimatedLimit) : "",
+      limitIsAuto: win.limitIsAuto,
+      windowHours: config.resetWindowHours,
     };
   }
 
@@ -164,6 +199,16 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     <div class="card"><div class="card-title">Today</div><div class="card-cost" id="today-cost"></div><div class="card-tokens muted" id="today-tokens"></div></div>
     <div class="card"><div class="card-title">This month</div><div class="card-cost" id="month-cost"></div><div class="card-tokens muted" id="month-tokens"></div></div>
     <div class="card"><div class="card-title">All-time</div><div class="card-cost" id="all-cost"></div><div class="card-tokens muted" id="all-tokens"></div></div>
+  </section>
+
+  <section id="reset" class="reset-card" hidden>
+    <div class="reset-head">
+      <span class="reset-title">Usage window</span>
+      <span class="reset-sub muted" id="reset-sub"></span>
+    </div>
+    <div class="reset-big" id="reset-big">Claude —</div>
+    <div class="reset-track"><div class="reset-fill" id="reset-fill"></div></div>
+    <div class="reset-meta muted" id="reset-meta"></div>
   </section>
 
   <h3>Daily usage</h3>

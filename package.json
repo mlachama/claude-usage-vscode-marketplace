@@ -94,14 +94,14 @@
         },
         "claude-usage.currency": {
           "type": "string",
-          "default": "USD",
-          "description": "Currency label used when displaying cost. Costs are computed in USD; a non-USD label applies the currencyRate multiplier.",
+          "default": "auto",
+          "markdownDescription": "Display currency. `auto` detects it from your system region (Philippines → `PHP` ₱, US → `USD` $, …). Or set an explicit ISO 4217 code (`PHP`, `EUR`, `JPY`). Costs are computed in USD, then converted with `currencyRate` and formatted with the matching symbol and thousands grouping.",
           "scope": "window"
         },
         "claude-usage.currencyRate": {
           "type": "number",
-          "default": 1,
-          "description": "Multiplier applied to USD costs for display (e.g. 0.92 for EUR).",
+          "default": 0,
+          "markdownDescription": "Multiplier applied to USD costs for display. Leave at `0` to use a bundled **approximate** rate for the display currency (offline, updated periodically). Set your own number (e.g. `56` for PHP) for an exact rate. The extension never fetches live exchange rates.",
           "scope": "window"
         },
         "claude-usage.statusBar.enabled": {
@@ -116,7 +116,15 @@
             "todayCost",
             "todayTokens",
             "monthCost",
+            "resetTimer",
             "hide"
+          ],
+          "enumDescriptions": [
+            "Today's estimated cost.",
+            "Today's token count.",
+            "This month's estimated cost.",
+            "Time until your usage window resets and estimated quota left (e.g. \"Claude 4:15 - 23%\").",
+            "Hide the status bar item."
           ],
           "default": "todayCost",
           "description": "Which metric the status bar item displays.",
@@ -138,7 +146,42 @@
         "claude-usage.budget.monthly": {
           "type": "number",
           "default": 0,
-          "description": "Monthly budget in USD. When exceeded, the status bar item shows a warning color. Set to 0 to disable.",
+          "markdownDescription": "Monthly budget in your display currency (see `currency`/`currencyRate`). When this month's estimated cost exceeds it, the status bar item shows a warning color. Set to `0` to disable.",
+          "scope": "window"
+        },
+        "claude-usage.resetWindow.hours": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "markdownDescription": "Length in hours of the usage window used by the `resetTimer` status-bar metric. Claude subscriptions reset on a rolling 5-hour window; change only if yours differs.",
+          "scope": "window"
+        },
+        "claude-usage.resetWindow.tokenLimit": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "markdownDescription": "Token quota per usage window, used to compute the **% left** in the `resetTimer` metric. Leave at `0` to auto-estimate from your historical peak usage. Your real plan limit isn't stored locally, so the percentage is always an estimate.",
+          "scope": "window"
+        },
+        "claude-usage.notifications.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show a pop-up notification when your estimated spend crosses a budget or daily threshold. Each alert is shown at most once per period, and never nags on window reload.",
+          "scope": "window"
+        },
+        "claude-usage.notifications.budgetWarnAtPercent": {
+          "type": "number",
+          "default": 80,
+          "minimum": 0,
+          "maximum": 100,
+          "markdownDescription": "Send an early heads-up once this month's estimated cost reaches this percentage of `budget.monthly` (a separate alert fires at 100%). Set to `0` to only notify when the budget is exceeded. Requires a non-zero `budget.monthly`.",
+          "scope": "window"
+        },
+        "claude-usage.notifications.dailyCostThreshold": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "markdownDescription": "Notify once per day when **today's** estimated cost passes this amount, in your display currency (e.g. `100` for ₱100/day). Set to `0` to disable the daily alert.",
           "scope": "window"
         },
         "claude-usage.pricingOverrides": {

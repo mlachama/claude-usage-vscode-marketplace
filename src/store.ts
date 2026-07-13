@@ -19,6 +19,7 @@ interface FileCacheEntry {
 export interface StoreConfig {
   projectsDir: string;
   costOptions: CostOptions;
+  windowHours: number;
 }
 
 /**
@@ -98,7 +99,7 @@ export class UsageStore {
         all.push(e);
       }
     }
-    this.result = aggregate(all);
+    this.result = aggregate(all, this.getConfig().windowHours);
     this._onDidChange.fire();
   }
 

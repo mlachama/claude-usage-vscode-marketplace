@@ -4,10 +4,11 @@ See how many tokens Claude Code has used — and an estimated cost — without l
 
 ## Features
 
-- **Status bar** — today's estimated cost (or tokens) at a glance, with a tooltip breakdown of today / this month / all-time and your top model.
+- **Status bar** — today's estimated cost (or tokens) at a glance, with a tooltip breakdown of today / this month / all-time and your top model. Or switch it to a **usage-window reset timer** (`Claude 4:15 - 23%` — time until your rolling window resets and estimated quota left).
 - **Dashboard** (activity-bar view) — summary cards, a daily-usage bar chart, and breakdowns by model and by project.
 - **Projects tree** — drill into project → session → token/cost details.
 - **Estimated cost** — computed from a bundled per-model pricing table with the four token categories (input, output, cache write, cache read). Fully overridable in settings.
+- **Budget notifications** — get a pop-up when this month approaches or passes your budget, or when today's cost crosses a daily threshold. Each alert fires once per period (no reload nagging).
 - **Live updates** — watches the Claude data directory and refreshes automatically.
 
 > **Cost is an estimate.** It is the *API-equivalent* cost of the tokens used. Subscription (Max/Pro) sessions are **not** billed per token, so treat the dollar figure as a reference, not a bill. Token counts are always exact.
@@ -20,12 +21,17 @@ All under `claude-usage.*`:
 | --- | --- | --- |
 | `refreshInterval` | `60` | Seconds between background re-scans (`0` disables the interval; the file watcher still runs). |
 | `showCost` | `true` | Show cost figures; when off, only tokens are shown. |
-| `currency` / `currencyRate` | `USD` / `1` | Display currency label and multiplier applied to USD costs. |
+| `currency` / `currencyRate` | `auto` / `0` | Display currency and USD multiplier. `auto` detects your currency from the system region (PH → ₱ PHP, US → $ USD, …); rate `0` uses a bundled **approximate** offline rate. Set an explicit code and/or exact rate to override. Formats with the right symbol and thousands grouping; live rates are never fetched. |
 | `statusBar.enabled` | `true` | Show the status bar item. |
-| `statusBar.metric` | `todayCost` | `todayCost` \| `todayTokens` \| `monthCost` \| `hide`. |
+| `statusBar.metric` | `todayCost` | `todayCost` \| `todayTokens` \| `monthCost` \| `resetTimer` \| `hide`. |
+| `resetWindow.hours` | `5` | Length of the rolling usage window for the `resetTimer` metric. |
+| `resetWindow.tokenLimit` | `0` | Token quota per window for the `% left` figure; `0` auto-estimates from your peak usage. |
 | `claudePath` | `""` | Custom Claude data directory (defaults to `~/.claude`). |
 | `daysToShow` | `14` | Days in the daily chart. |
-| `budget.monthly` | `0` | Monthly USD budget; the status bar turns amber when exceeded (`0` = off). |
+| `budget.monthly` | `0` | Monthly budget in your **display currency**; the status bar turns amber when this month exceeds it (`0` = off). |
+| `notifications.enabled` | `true` | Pop a notification when spend crosses a budget/daily threshold (shown once per period, no reload nagging). |
+| `notifications.budgetWarnAtPercent` | `80` | Early heads-up at this % of the monthly budget (a second alert fires at 100%; `0` = only on exceed). |
+| `notifications.dailyCostThreshold` | `0` | Notify once/day when **today's** cost passes this amount in your display currency (`0` = off). |
 | `pricingOverrides` | `{}` | Per-model rate overrides in USD per 1M tokens. |
 
 ### Pricing overrides

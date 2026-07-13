@@ -1,3 +1,4 @@
+import { computeBlocks } from "./blocks";
 import { Deduplicator } from "./dedup";
 import {
   AggregationResult,
@@ -93,8 +94,12 @@ function sortByCostDesc(rollups: UsageRollup[]): UsageRollup[] {
  * Reduce a stream of (possibly duplicated) usage entries into the five rollups
  * plus a grand total. Deduplication on messageId:requestId spans the whole set.
  */
-export function aggregate(entries: Iterable<UsageEntry>): AggregationResult {
+export function aggregate(
+  entries: Iterable<UsageEntry>,
+  windowHours = 5
+): AggregationResult {
   const dedup = new Deduplicator();
+  const deduped: UsageEntry[] = [];
   const byDay = new Map<string, UsageRollup>();
   const byMonth = new Map<string, UsageRollup>();
   const bySession = new Map<string, UsageRollup>();
@@ -118,6 +123,7 @@ export function aggregate(entries: Iterable<UsageEntry>): AggregationResult {
     if (!dedup.shouldCount(e.messageId, e.requestId)) {
       continue;
     }
+    deduped.push(e);
     upsert(byDay, e.date, e.date, e);
     upsert(byMonth, e.month, e.month, e);
     upsert(bySession, e.sessionId, e.sessionId.slice(0, 8) || e.sessionId, e);
@@ -157,6 +163,7 @@ export function aggregate(entries: Iterable<UsageEntry>): AggregationResult {
     byProject: byProjectSorted,
     byModel: sortByCostDesc(Array.from(byModel.values())),
     projectTree,
+    blocks: computeBlocks(deduped, windowHours),
     grandTotal: grand,
   };
 }
