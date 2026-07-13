@@ -1,0 +1,179 @@
+{
+  "name": "claude-usage",
+  "displayName": "Claude Usage",
+  "description": "Token usage and estimated cost from your local Claude Code logs, right in VS Code.",
+  "version": "0.0.1",
+  "publisher": "your-publisher-id",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mlachama/claude-usage-vscode-marketplace"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "claude",
+    "claude code",
+    "usage",
+    "tokens",
+    "cost",
+    "anthropic"
+  ],
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "claude-usage.refresh",
+        "title": "Claude Usage: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "claude-usage.openDashboard",
+        "title": "Claude Usage: Open Dashboard"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claude-usage",
+          "title": "Claude Usage",
+          "icon": "media/sidebar-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "claude-usage": [
+        {
+          "id": "claude-usage.dashboard",
+          "name": "Dashboard",
+          "type": "webview"
+        },
+        {
+          "id": "claude-usage.tree",
+          "name": "Projects"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "claude-usage.refresh",
+          "when": "view == claude-usage.dashboard || view == claude-usage.tree",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Claude Usage",
+      "properties": {
+        "claude-usage.refreshInterval": {
+          "type": "number",
+          "default": 60,
+          "minimum": 0,
+          "markdownDescription": "Seconds between background re-scans of the Claude data directory. Set to `0` to disable the interval fallback (the file watcher still applies).",
+          "scope": "window"
+        },
+        "claude-usage.showCost": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show estimated cost figures. When off, only token counts are shown.",
+          "scope": "window"
+        },
+        "claude-usage.currency": {
+          "type": "string",
+          "default": "USD",
+          "description": "Currency label used when displaying cost. Costs are computed in USD; a non-USD label applies the currencyRate multiplier.",
+          "scope": "window"
+        },
+        "claude-usage.currencyRate": {
+          "type": "number",
+          "default": 1,
+          "description": "Multiplier applied to USD costs for display (e.g. 0.92 for EUR).",
+          "scope": "window"
+        },
+        "claude-usage.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the Claude Usage status bar item.",
+          "scope": "window"
+        },
+        "claude-usage.statusBar.metric": {
+          "type": "string",
+          "enum": [
+            "todayCost",
+            "todayTokens",
+            "monthCost",
+            "hide"
+          ],
+          "default": "todayCost",
+          "description": "Which metric the status bar item displays.",
+          "scope": "window"
+        },
+        "claude-usage.claudePath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Custom path to the Claude data directory. Leave empty to use `~/.claude`. `~` and environment variables are expanded.",
+          "scope": "window"
+        },
+        "claude-usage.daysToShow": {
+          "type": "number",
+          "default": 14,
+          "minimum": 1,
+          "description": "Number of days shown in the daily usage chart.",
+          "scope": "window"
+        },
+        "claude-usage.budget.monthly": {
+          "type": "number",
+          "default": 0,
+          "description": "Monthly budget in USD. When exceeded, the status bar item shows a warning color. Set to 0 to disable.",
+          "scope": "window"
+        },
+        "claude-usage.pricingOverrides": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "Per-model pricing overrides in USD per 1M tokens. Keys are model ids; each value may set `input`, `output`, `cacheWrite5m`, `cacheWrite1h`, `cacheRead`.\n\nExample:\n```json\n{ \"claude-opus-4-8\": { \"input\": 5, \"output\": 25 } }\n```",
+          "scope": "window"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . --outDir out --watch",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.23.0",
+    "eslint": "^9.9.0",
+    "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0"
+  }
+}
