@@ -54,16 +54,18 @@
     );
   }
 
-  function formatDur(ms) {
+  function formatHrMin(ms) {
     var mins = Math.max(0, Math.floor(ms / 60000));
-    return Math.floor(mins / 60) + ":" + String(mins % 60).padStart(2, "0");
+    var h = Math.floor(mins / 60);
+    var m = mins % 60;
+    return h > 0 ? h + " hr " + m + " min" : m + " min";
   }
 
   function setFill(pct) {
     var fill = document.getElementById("reset-fill");
     if (fill) {
       fill.style.width = pct + "%";
-      fill.classList.toggle("low", pct < 10);
+      fill.classList.toggle("low", pct >= 90); // < 10% left
     }
   }
 
@@ -80,45 +82,40 @@
     card.hidden = false;
     if (!rw.active) {
       resetState = null;
-      text("reset-big", "Claude ready");
-      text("reset-sub", "");
-      text(
-        "reset-meta",
-        "No active " + rw.windowHours + "-hour window — your quota is fresh."
-      );
-      setFill(rw.percentLeft == null ? 100 : rw.percentLeft);
+      text("reset-sub", "No active session");
+      text("reset-pct", "0% used");
+      setFill(0);
+      text("reset-meta", "Your " + rw.windowHours + "-hour quota is fresh.");
       return;
     }
-    resetState = { resetTime: Date.parse(rw.resetTime), percentLeft: rw.percentLeft };
-    if (rw.limit) {
-      var cap = rw.limitIsAuto ? "~" + rw.limit : rw.limit;
-      text("reset-meta", rw.used + " / " + cap + " tokens used (estimated)");
+    resetState = {
+      resetTime: Date.parse(rw.resetTime),
+      percentUsed: rw.percentUsed,
+    };
+    if (rw.percentUsed == null) {
+      text("reset-pct", "");
+      setFill(0);
+      text("reset-meta", rw.used + " tokens used · set resetWindow.tokenLimit for %");
     } else {
-      text("reset-meta", rw.used + " tokens used · set a token limit for % left");
+      var cap = rw.limitIsAuto ? "~" + rw.limit : rw.limit;
+      text("reset-meta", rw.used + " / " + cap + " tokens · estimated");
     }
-    updateResetBig();
+    updateResetCountdown();
   }
 
-  function updateResetBig() {
+  function updateResetCountdown() {
     if (!resetState) {
       return;
     }
-    var left = resetState.resetTime - Date.now();
-    var pct = resetState.percentLeft;
-    text("reset-big", "Claude " + formatDur(left) + (pct == null ? "" : " - " + pct + "%"));
-    text(
-      "reset-sub",
-      "resets " +
-        new Date(resetState.resetTime).toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-        })
-    );
-    setFill(pct == null ? 100 : pct);
+    text("reset-sub", "Resets in " + formatHrMin(resetState.resetTime - Date.now()));
+    if (resetState.percentUsed != null) {
+      text("reset-pct", resetState.percentUsed + "% used");
+      setFill(resetState.percentUsed);
+    }
   }
 
-  // Tick the countdown once a second (the % only changes on new data).
-  setInterval(updateResetBig, 1000);
+  // Tick the "Resets in …" text once a second (% only changes on new data).
+  setInterval(updateResetCountdown, 1000);
 
   function renderBars(id, rows, showCost) {
     const container = document.getElementById(id);

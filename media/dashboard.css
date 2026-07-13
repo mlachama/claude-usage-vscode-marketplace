@@ -68,53 +68,45 @@ h3 {
   margin-top: 2px;
 }
 
-.reset-card {
-  background: var(--vscode-editorWidget-background);
-  border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
-  border-radius: 6px;
-  padding: 12px;
-  margin-top: 10px;
+.uw-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 1.1fr) 2fr auto;
+  align-items: center;
+  gap: 12px;
 }
-.reset-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-.reset-title {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--vscode-descriptionForeground);
-}
-.reset-sub {
-  font-size: 11px;
-}
-.reset-big {
-  font-size: 22px;
+.uw-name {
   font-weight: 600;
-  margin: 6px 0 8px;
-  font-variant-numeric: tabular-nums;
+  font-size: 13px;
 }
-.reset-track {
-  background: rgba(127, 127, 127, 0.25);
+.uw-reset {
+  font-size: 11px;
+  margin-top: 2px;
+}
+.uw-bar {
+  background: rgba(90, 140, 200, 0.22);
   border-radius: 4px;
   height: 8px;
   overflow: hidden;
 }
-.reset-fill {
+.uw-bar-fill {
   height: 100%;
   width: 0;
   background: var(--vscode-charts-blue, #4e94ce);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
-.reset-fill.low {
+.uw-bar-fill.low {
   background: var(--vscode-charts-red, #e51400);
 }
-.reset-meta {
+.uw-pct {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--vscode-descriptionForeground);
+}
+.uw-note {
   font-size: 11px;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .bars {

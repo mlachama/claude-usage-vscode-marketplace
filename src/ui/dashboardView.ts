@@ -20,8 +20,8 @@ interface ResetWindowData {
   active: boolean;
   /** ISO reset time, for a live client-side countdown (null when idle). */
   resetTime: string | null;
-  /** Rounded % of quota left, or null when the cap isn't known. */
-  percentLeft: number | null;
+  /** Rounded % of quota used, or null when the cap isn't known. */
+  percentUsed: number | null;
   used: string; // formatted tokens
   limit: string; // formatted tokens ("" when unknown)
   limitIsAuto: boolean;
@@ -147,7 +147,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
       return {
         active: false,
         resetTime: null,
-        percentLeft: null,
+        percentUsed: 0,
         used: "",
         limit: "",
         limitIsAuto: config.resetTokenLimit <= 0,
@@ -157,7 +157,8 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     return {
       active: true,
       resetTime: win.resetTime,
-      percentLeft: win.percentLeft === undefined ? null : Math.round(win.percentLeft),
+      percentUsed:
+        win.percentLeft === undefined ? null : Math.round(100 - win.percentLeft),
       used: formatTokens(win.tokensUsed),
       limit: win.estimatedLimit > 0 ? formatTokens(win.estimatedLimit) : "",
       limitIsAuto: win.limitIsAuto,
@@ -201,14 +202,17 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     <div class="card"><div class="card-title">All-time</div><div class="card-cost" id="all-cost"></div><div class="card-tokens muted" id="all-tokens"></div></div>
   </section>
 
-  <section id="reset" class="reset-card" hidden>
-    <div class="reset-head">
-      <span class="reset-title">Usage window</span>
-      <span class="reset-sub muted" id="reset-sub"></span>
+  <section id="reset" class="uw" hidden>
+    <h3>Usage limits</h3>
+    <div class="uw-row">
+      <div class="uw-left">
+        <div class="uw-name">Current session</div>
+        <div class="uw-reset muted" id="reset-sub"></div>
+      </div>
+      <div class="uw-bar"><div class="uw-bar-fill" id="reset-fill"></div></div>
+      <div class="uw-pct" id="reset-pct"></div>
     </div>
-    <div class="reset-big" id="reset-big">Claude —</div>
-    <div class="reset-track"><div class="reset-fill" id="reset-fill"></div></div>
-    <div class="reset-meta muted" id="reset-meta"></div>
+    <div class="uw-note muted" id="reset-meta"></div>
   </section>
 
   <h3>Daily usage</h3>
