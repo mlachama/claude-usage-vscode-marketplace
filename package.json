@@ -2,8 +2,8 @@
   "name": "claude-usage",
   "displayName": "Claude Usage",
   "description": "Token usage and estimated cost from your local Claude Code logs, right in VS Code.",
-  "version": "0.0.1",
-  "publisher": "your-publisher-id",
+  "version": "0.1.0",
+  "publisher": "mariel-chama",
   "license": "MIT",
   "icon": "media/icon.png",
   "repository": {
