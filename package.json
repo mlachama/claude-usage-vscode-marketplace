@@ -1,9 +1,9 @@
 {
-  "name": "claude-usage",
-  "displayName": "Claude Usage",
+  "name": "claude-usage-tracker-ml",
+  "displayName": "Claude Usage & Cost Tracker",
   "description": "Token usage and estimated cost from your local Claude Code logs, right in VS Code.",
   "version": "0.1.0",
-  "publisher": "mariel-chama",
+  "publisher": "mariel-lachama",
   "license": "MIT",
   "icon": "media/icon.png",
   "repository": {
