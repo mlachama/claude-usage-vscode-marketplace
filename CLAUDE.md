@@ -13,6 +13,7 @@ over the network.
 
 - `npm install` — install dependencies.
 - `npm run compile` / `npm run watch` — esbuild bundle to `dist/extension.js` (watch for F5 dev).
+- `npm run package` — production bundle (minified, no sourcemap; also run by `vscode:prepublish`). `node esbuild.js --analyze` prints a bundle-size breakdown.
 - `npm run compile-tests` — `tsc` typecheck + emit tests to `out/`.
 - `npm run lint` — eslint over `src`.
 - `npm test` — full integration tests via `@vscode/test-cli` (downloads a VS Code build; needs network).
@@ -31,6 +32,7 @@ Data flows one direction: **files → store → aggregation → UI**.
   - `aggregate.ts` reduces entries into day/month/session/project/model rollups (+ a project→session tree), each with a nested per-model breakdown. It also calls `blocks.ts` to attach `blocks` (see below); pass `windowHours` as the 2nd arg.
   - `blocks.ts` reconstructs Anthropic's rolling ~5-hour usage windows from message timestamps (ccusage-style grouping). `activeWindowStatus` reports time-to-reset + estimated `% left` for the window containing "now"; the quota cap is the user's `resetWindow.tokenLimit` or, when 0, the peak of any historical block (auto-calibration). The `%` is inherently an estimate — the real plan limit isn't stored locally. Feeds both the `resetTimer` status-bar metric (`Claude 4:15 - 23%`, showing % **left**) and the dashboard's "Usage limits" card, which mirrors Claude Code's native usage panel (Current session · "Resets in Xhr Ymin" · bar · "N% **used**") — session only, since weekly/server limits aren't in the local logs. Both count down live: the status bar via a 30s `setInterval`, the dashboard webview via its own 1s tick in `media/dashboard.js` (the extension passes the absolute `resetTime` so the countdown runs client-side).
   - `currency.ts` resolves the display currency + rate offline: `currency:"auto"` maps the OS region (via `Intl.Locale`) to an ISO code, and `currencyRate:0` uses a bundled **approximate** USD→currency table (labeled, user-overridable — same fallback philosophy as `BUNDLED_PRICING`). `formatCost` in `src/format.ts` then renders it with `Intl.NumberFormat` (`narrowSymbol`) for the correct symbol + grouping.
+- `src/config.ts` (`readConfig` → `ExtensionConfig`) is the single place that reads the `claude-usage.*` settings and resolves them into a typed struct (expanding `claudePath` via `data/paths.ts`, folding `currency`/`currencyRate` through `data/currency.ts`, and building `costOptions`). Every other module takes `ExtensionConfig`, not `vscode.workspace.getConfiguration`, so read a setting's effective value here rather than at each use site.
 - `src/store.ts` (`UsageStore`) owns a per-file cache keyed by `{mtimeMs,size,offset}` and re-parses only the appended tail of changed files, then re-aggregates. Fires `onDidChange`.
 - `src/watcher.ts` uses **chokidar** (not `workspace.createFileSystemWatcher`, which can't see `~/.claude` outside the workspace) with debounce + an interval fallback.
 - `src/ui/` renders: `statusBar.ts`, `dashboardView.ts` (webview view; strict nonce CSP; extension owns data, `media/dashboard.{css,js}` is a dumb renderer with hand-rolled div bars — no CDN), `treeView.ts`, and `notifier.ts`.
@@ -39,5 +41,6 @@ Data flows one direction: **files → store → aggregation → UI**.
 
 ## Notes
 
+- Packaging: the `.vsix` ships only `dist/`, `media/`, and the manifest — esbuild bundles all production deps (chokidar) into `dist/extension.js`, so `node_modules` is excluded. `.vscodeignore` also explicitly excludes `**/*.jsonl` / `samples/` / `fixtures/`: this extension parses real session logs, and sample logs must never end up in a published package.
 - Cost is always an **estimate** and labeled as such — subscription (Max/Pro) sessions are not billed per token. Token counts are exact.
 - When Claude model ids or prices change, update `BUNDLED_PRICING` in `src/data/pricing.ts`; users can also override via the `claude-usage.pricingOverrides` setting.

@@ -1,15 +1,42 @@
-.vscode/**
-.vscode-test/**
-.vscode-test.mjs
+# Sources & build intermediates (only dist/ ships)
 src/**
 out/**
-node_modules/**
-esbuild.js
+**/*.ts
+**/*.map
 tsconfig.json
-eslint.config.mjs
+esbuild.js
+
+# esbuild bundles production deps into dist/extension.js,
+# so node_modules is dev-only weight
+node_modules/**
+package-lock.json
+
+# Tests
+.vscode-test/**
+.vscode-test.mjs
+**/*.test.js
+
+# Local log samples / scratch data (this extension parses .jsonl logs —
+# real session samples must never ship)
+**/*.jsonl
+samples/**
+fixtures/**
+*.log
+*.vsix
+
+# Dev configs & tooling
+.vscode/**
+.github/**
 .gitignore
+.gitattributes
+.editorconfig
+eslint.config.mjs
+
+# AI-assistant state
 CLAUDE.md
 .claude/**
-**/*.vsix
-**/*.map
-**/*.ts
+
+# Stray root assets (media/** is re-included — runtime assets live there)
+Claude .png
+*.png
+!media/**

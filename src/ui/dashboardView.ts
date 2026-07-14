@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import * as vscode from "vscode";
 import { ExtensionConfig } from "../config";
 import { formatCost, formatTokens, monthKey, todayKey } from "../format";
@@ -68,24 +69,43 @@ function bars(
   });
 }
 
-export class DashboardProvider implements vscode.WebviewViewProvider {
+export class DashboardProvider
+  implements vscode.WebviewViewProvider, vscode.Disposable
+{
   private view: vscode.WebviewView | undefined;
+  private viewListener: vscode.Disposable | undefined;
   private latest: DashboardData | undefined;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
+  dispose(): void {
+    this.viewListener?.dispose();
+    this.viewListener = undefined;
+    this.view = undefined;
+  }
+
   resolveWebviewView(view: vscode.WebviewView): void {
+    this.viewListener?.dispose();
     this.view = view;
     view.webview.options = {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "media")],
     };
     view.webview.html = this.html(view.webview);
-    view.webview.onDidReceiveMessage((msg: { type?: string }) => {
-      if (msg?.type === "ready") {
-        this.post();
-      } else if (msg?.type === "refresh") {
-        void vscode.commands.executeCommand("claude-usage.refresh");
+    this.viewListener = view.webview.onDidReceiveMessage(
+      (msg: { type?: string }) => {
+        if (msg?.type === "ready") {
+          this.post();
+        } else if (msg?.type === "refresh") {
+          void vscode.commands.executeCommand("claude-usage.refresh");
+        }
+      }
+    );
+    // Drop the reference when VS Code recreates the view, so post() never
+    // hits a disposed webview.
+    view.onDidDispose(() => {
+      if (this.view === view) {
+        this.dispose();
       }
     });
   }
@@ -233,11 +253,5 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
 }
 
 function getNonce(): string {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let text = "";
-  for (let i = 0; i < 32; i++) {
-    text += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return text;
+  return randomBytes(24).toString("base64");
 }

@@ -8,12 +8,18 @@ type Node =
   | { kind: "session"; project: ProjectNode; session: UsageRollup }
   | { kind: "metric"; label: string; value: string };
 
-export class UsageTreeProvider implements vscode.TreeDataProvider<Node> {
+export class UsageTreeProvider
+  implements vscode.TreeDataProvider<Node>, vscode.Disposable
+{
   private result: AggregationResult | undefined;
   private config: ExtensionConfig | undefined;
 
   private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+
+  dispose(): void {
+    this._onDidChangeTreeData.dispose();
+  }
 
   setData(result: AggregationResult | undefined, config: ExtensionConfig): void {
     this.result = result;

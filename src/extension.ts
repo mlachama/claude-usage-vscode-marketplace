@@ -27,7 +27,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const notifier = new Notifier(context.globalState);
   const watcher = new UsageWatcher(() => void store.scan(), output);
 
-  context.subscriptions.push(store, statusBar, watcher);
+  context.subscriptions.push(store, statusBar, watcher, dashboard, tree);
 
   const renderAll = () => {
     const result = store.getResult();
